@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(grep -E \"\\\\.json$|\\\\.config|package\")",
+      "Bash(npx vite:*)"
+    ]
+  },
+  "enabledPlugins": {
+    "andrej-karpathy-skills@karpathy-skills": true,
+    "claude-md-management@claude-plugins-official": true
+  }
+}
