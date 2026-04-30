@@ -4,6 +4,7 @@
   "main": "main.js",
   "scripts": {
     "dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && electron .\"",
+    "dev:debug": "concurrently \"vite\" \"wait-on http://localhost:5173 && electron . --remote-debugging-port=9222\"",
     "build": "vite build",
     "start": "npm run build && cross-env NODE_ENV=production electron .",
     "dist": "npm run build && electron-builder"

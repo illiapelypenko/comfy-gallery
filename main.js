@@ -1,5 +1,4 @@
 const { app, BrowserWindow, ipcMain, dialog, shell, Menu } = require('electron');
-Menu.setApplicationMenu(null);
 const path = require('path');
 const fs = require('fs');
 
@@ -448,7 +447,10 @@ ipcMain.handle('toggle-fullscreen', () => {
 });
 
 // ── App lifecycle ──────────────────────────────────────────────────────────
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  Menu.setApplicationMenu(null);
+  createWindow();
+});
 app.on('window-all-closed', () => {
   if (folderWatcher) { folderWatcher.close(); folderWatcher = null; }
   if (process.platform !== 'darwin') app.quit();
