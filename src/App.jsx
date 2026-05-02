@@ -45,6 +45,14 @@ export default function App() {
   const [showCompare, setShowCompare] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [activeTab, setActiveTab] = useState('images');
+  const [pendingPromptImport, setPendingPromptImport] = useState(null);
+
+  const handleEditInBuilder = useCallback(({ positive, negative }) => {
+    setPendingPromptImport({ positive, negative });
+    setActiveTab('builder');
+    setLightboxIndex(null);
+    setShowCompare(false);
+  }, []);
   const [viewOptions, setViewOptions] = useState(() => {
     const defaults = { originalAspect: false, largeGrid: false, showResolution: true, groupBySeed: false };
     try {
@@ -251,7 +259,12 @@ export default function App() {
         )
       )}
       {activeTab === 'comfyui' && <ComfyUITab />}
-      {activeTab === 'builder' && <PromptBuilderTab />}
+      {activeTab === 'builder' && (
+        <PromptBuilderTab
+          pendingImport={pendingPromptImport}
+          onConsumeImport={() => setPendingPromptImport(null)}
+        />
+      )}
       {lightboxIndex !== null && (
         <Lightbox
           images={navImages}
@@ -259,6 +272,7 @@ export default function App() {
           onClose={closeLightbox}
           onNavigate={navigate}
           onDelete={handleDelete}
+          onEditInBuilder={handleEditInBuilder}
           isFullscreen={isFullscreen}
         />
       )}
@@ -268,6 +282,7 @@ export default function App() {
           imageMeta={imageMeta}
           images={images}
           onClose={() => setShowCompare(false)}
+          onEditInBuilder={handleEditInBuilder}
         />
       )}
     </div>

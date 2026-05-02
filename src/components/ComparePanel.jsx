@@ -140,7 +140,7 @@ function CompareSlider({ pathA, pathB, dims }) {
   );
 }
 
-export default function ComparePanel({ selectedPaths, imageMeta, images, onClose }) {
+export default function ComparePanel({ selectedPaths, imageMeta, images, onClose, onEditInBuilder }) {
   const [onlyDiffs, setOnlyDiffs] = useState(true);
   const [dims, setDims] = useState({});
   const [fullscreen, setFullscreen] = useState(false);
@@ -196,14 +196,24 @@ export default function ComparePanel({ selectedPaths, imageMeta, images, onClose
   const visibleRows = onlyDiffs ? rows.filter(r => !r.allSame) : rows;
 
   const renderRowValue = (row, val, i) => {
+    const editBtn = row.key === 'positivePrompt' && val !== '—' && onEditInBuilder ? (
+      <button
+        className="compare-edit-builder"
+        onClick={() => {
+          const meta = imageMeta[selectedPaths[i]];
+          onEditInBuilder({ positive: meta?.positivePrompt || '', negative: meta?.negativePrompt || '' });
+        }}
+        title="Load this prompt into Prompt Builder"
+      >→ Builder</button>
+    ) : null;
     if ((row.key === 'positivePrompt' || row.key === 'negativePrompt') && !row.allSame) {
-      return <PromptDiff values={row.values} index={i} />;
+      return <>{editBtn}<PromptDiff values={row.values} index={i} /></>;
     }
     const wrap =
       row.key === 'positivePrompt' ||
       row.key === 'negativePrompt' ||
       row.key === 'loras';
-    return <span className={wrap ? 'compare-text-wrap' : ''}>{val}</span>;
+    return <>{editBtn}<span className={wrap ? 'compare-text-wrap' : ''}>{val}</span></>;
   };
 
   return (

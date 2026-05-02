@@ -446,6 +446,102 @@ ipcMain.handle('toggle-fullscreen', () => {
   if (win) win.setFullScreen(!win.isFullScreen());
 });
 
+// ── Character library (Phase 5) ────────────────────────────────────────────
+const CHARS_DIR = path.resolve(__dirname, '..', 'local gen knowledge base', 'prompts-booru', 'characters');
+
+function walkCharFiles(dirPath, series, subPath, out) {
+  let entries;
+  try { entries = fs.readdirSync(dirPath, { withFileTypes: true }); } catch { return; }
+  for (const e of entries) {
+    const full = path.join(dirPath, e.name);
+    if (e.isDirectory()) {
+      walkCharFiles(full, series, subPath ? path.join(subPath, e.name) : e.name, out);
+    } else if (e.isFile() && e.name.toLowerCase().endsWith('.md')) {
+      out.push({
+        series,
+        name: path.basename(e.name, '.md'),
+        path: full,
+        multi: subPath === 'multi-character' || subPath?.startsWith('multi-character'),
+      });
+    }
+  }
+}
+
+ipcMain.handle('list-characters', () => {
+  if (!fs.existsSync(CHARS_DIR)) return { dir: CHARS_DIR, items: [] };
+  const items = [];
+  const seriesDirs = fs.readdirSync(CHARS_DIR, { withFileTypes: true })
+    .filter(e => e.isDirectory());
+  for (const sd of seriesDirs) walkCharFiles(path.join(CHARS_DIR, sd.name), sd.name, '', items);
+  items.sort((a, b) => a.series.localeCompare(b.series) || a.name.localeCompare(b.name));
+  return { dir: CHARS_DIR, items };
+});
+
+ipcMain.handle('read-character', (_, filePath) => {
+  if (!filePath || !filePath.startsWith(CHARS_DIR)) return null;
+  try { return fs.readFileSync(filePath, 'utf-8'); } catch { return null; }
+});
+
+// ── Presets (Phase 4.2/4.3) ────────────────────────────────────────────────
+const PRESETS_DIR = path.resolve(__dirname, '..', 'shared', 'presets');
+const sanitizeName = (s) => s.replace(/[^a-zA-Z0-9_\- ]/g, '').trim();
+
+ipcMain.handle('list-presets', () => {
+  if (!fs.existsSync(PRESETS_DIR)) return [];
+  try {
+    return fs.readdirSync(PRESETS_DIR)
+      .filter(f => f.toLowerCase().endsWith('.json'))
+      .map(f => path.basename(f, '.json'));
+  } catch { return []; }
+});
+
+ipcMain.handle('read-preset', (_, name) => {
+  const safe = sanitizeName(name || '');
+  if (!safe) return null;
+  const file = path.join(PRESETS_DIR, safe + '.json');
+  if (!file.startsWith(PRESETS_DIR)) return null;
+  try { return JSON.parse(fs.readFileSync(file, 'utf-8')); } catch { return null; }
+});
+
+ipcMain.handle('save-preset', (_, { name, data }) => {
+  const safe = sanitizeName(name || '');
+  if (!safe) return { ok: false, error: 'invalid name' };
+  const file = path.join(PRESETS_DIR, safe + '.json');
+  if (!file.startsWith(PRESETS_DIR)) return { ok: false, error: 'path escape' };
+  try {
+    fs.mkdirSync(PRESETS_DIR, { recursive: true });
+    fs.writeFileSync(file, JSON.stringify(data, null, 2), 'utf-8');
+    return { ok: true, path: file };
+  } catch (e) { return { ok: false, error: e.message }; }
+});
+
+ipcMain.handle('delete-preset', (_, name) => {
+  const safe = sanitizeName(name || '');
+  if (!safe) return { ok: false, error: 'invalid name' };
+  const file = path.join(PRESETS_DIR, safe + '.json');
+  if (!file.startsWith(PRESETS_DIR)) return { ok: false, error: 'path escape' };
+  try { fs.unlinkSync(file); return { ok: true }; }
+  catch (e) { return { ok: false, error: e.message }; }
+});
+
+ipcMain.handle('save-character', (_, { series, name, content }) => {
+  if (!series || !name || !content) return { ok: false, error: 'missing fields' };
+  const safe = (s) => s.replace(/[^a-zA-Z0-9_\- ]/g, '').trim();
+  const sSeries = safe(series);
+  const sName   = safe(name);
+  if (!sSeries || !sName) return { ok: false, error: 'invalid series or name' };
+  const dir  = path.join(CHARS_DIR, sSeries);
+  const file = path.join(dir, sName + '.md');
+  if (!file.startsWith(CHARS_DIR)) return { ok: false, error: 'path escape' };
+  try {
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(file, content, 'utf-8');
+    return { ok: true, path: file };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+});
+
 // ── App lifecycle ──────────────────────────────────────────────────────────
 app.whenReady().then(() => {
   Menu.setApplicationMenu(null);

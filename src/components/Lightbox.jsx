@@ -33,7 +33,7 @@ function DetailRow({ label, value, mono }) {
   );
 }
 
-export default function Lightbox({ images, index, onClose, onNavigate, onDelete, isFullscreen }) {
+export default function Lightbox({ images, index, onClose, onNavigate, onDelete, onEditInBuilder, isFullscreen }) {
   const img = images[index];
 
   // Details panel state
@@ -171,6 +171,14 @@ export default function Lightbox({ images, index, onClose, onNavigate, onDelete,
               )}
               {genMeta.positivePrompt && <DetailRow label="Positive"  value={genMeta.positivePrompt} />}
               {genMeta.negativePrompt && <DetailRow label="Negative"  value={genMeta.negativePrompt} />}
+              {genMeta.positivePrompt && onEditInBuilder && (
+                <button
+                  className="lb-edit-builder-btn"
+                  onClick={() => onEditInBuilder({ positive: genMeta.positivePrompt, negative: genMeta.negativePrompt || '' })}
+                >
+                  Edit in Prompt Builder →
+                </button>
+              )}
               {genMeta.loras && genMeta.loras.length > 0 && (
                 <>
                   <div className="detail-subsection-title">LoRAs</div>

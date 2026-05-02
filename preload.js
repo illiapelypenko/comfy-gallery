@@ -13,4 +13,11 @@ contextBridge.exposeInMainWorld('api', {
   toggleFullscreen:    ()    => ipcRenderer.invoke('toggle-fullscreen'),
   onFullscreenChanged: (cb)  => ipcRenderer.on('fullscreen-changed', (_, v) => cb(v)),
   offFullscreenChanged: (cb) => ipcRenderer.removeAllListeners('fullscreen-changed'),
+  listCharacters: ()      => ipcRenderer.invoke('list-characters'),
+  readCharacter:  (p)     => ipcRenderer.invoke('read-character', p),
+  saveCharacter:  (data)  => ipcRenderer.invoke('save-character', data),
+  listPresets:    ()      => ipcRenderer.invoke('list-presets'),
+  readPreset:     (n)     => ipcRenderer.invoke('read-preset', n),
+  savePreset:     (data)  => ipcRenderer.invoke('save-preset', data),
+  deletePreset:   (n)     => ipcRenderer.invoke('delete-preset', n),
 });
