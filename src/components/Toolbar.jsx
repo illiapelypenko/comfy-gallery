@@ -65,6 +65,10 @@ export default function Toolbar({ folder, currentPath, count, onOpenFolder, onRe
           className={`tab-btn${activeTab === 'comfyui' ? ' active' : ''}`}
           onClick={() => onTabChange('comfyui')}
         >ComfyUI</button>
+        <button
+          className={`tab-btn${activeTab === 'builder' ? ' active' : ''}`}
+          onClick={() => onTabChange('builder')}
+        >Prompt Builder</button>
       </div>
       <div className="toolbar-sep" />
       {activeTab === 'images' && (

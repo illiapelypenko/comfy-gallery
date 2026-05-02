@@ -4,6 +4,7 @@ import Grid from './components/Grid';
 import Lightbox from './components/Lightbox';
 import ComparePanel from './components/ComparePanel';
 import ComfyUITab from './components/ComfyUITab';
+import PromptBuilderTab from './components/PromptBuilderTab';
 
 // Computes the flat ordered image list that matches what the grid displays.
 // Flat: newest first. Grouped: newest group first, within each group oldest first.
@@ -162,6 +163,7 @@ export default function App() {
 
   // Restore last folder on startup
   useEffect(() => {
+    if (!window.api) return;
     window.api.getLastFolder().then(async (dirPath) => {
       if (!dirPath) return;
       setFolder(dirPath);
@@ -188,6 +190,7 @@ export default function App() {
 
   // Fullscreen state sync
   useEffect(() => {
+    if (!window.api) return;
     const handler = (v) => setIsFullscreen(v);
     window.api.onFullscreenChanged(handler);
     return () => window.api.offFullscreenChanged(handler);
@@ -195,6 +198,7 @@ export default function App() {
 
   // Folder watcher — watches the currently browsed path
   useEffect(() => {
+    if (!window.api) return;
     window.api.setWatchFolder(currentPath || null);
     if (!currentPath) return;
     const handler = () => refreshCurrentPath();
@@ -247,6 +251,7 @@ export default function App() {
         )
       )}
       {activeTab === 'comfyui' && <ComfyUITab />}
+      {activeTab === 'builder' && <PromptBuilderTab />}
       {lightboxIndex !== null && (
         <Lightbox
           images={navImages}
