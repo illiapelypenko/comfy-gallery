@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import treeData from '@shared/group_tags.json';
 import flatData from '@shared/group_tags_flat.json';
 import allBooruData from '@shared/all_booru_tags.json';
+import allBooruGroups from '@shared/all_booru_groups.json';
 import qualityData from '@shared/quality_tags.json';
 import sceneEffectData from '@shared/scene_effect_tags.json';
 
@@ -58,15 +59,18 @@ const qualityByTag = (() => {
   return m;
 })();
 
-// Resolve canonical group(s) for a tag — checks curated tree, FX library, and quality presets.
+// Resolve canonical group(s) for a tag — checks curated tree, FX library, quality presets,
+// and finally the bulk all-booru classification (Danbooru API + heuristics).
 function resolveGroups(tag) {
   const groups = [];
   const flatG = flatByTag.get(tag)?.group;
   const fxG   = fxByTag.get(tag)?.group;
   const qG    = qualityByTag.get(tag);
+  const bG    = allBooruGroups[tag];
   if (flatG) groups.push(flatG);
   if (fxG && !groups.includes(fxG)) groups.push(fxG);
   if (qG  && !groups.includes(qG))  groups.push(qG);
+  if (bG  && !groups.includes(bG))  groups.push(bG);
   return groups;
 }
 
@@ -103,14 +107,16 @@ const UNKNOWN_GROUP = '_unknown';
 function buildPrompt(chipsByGroup) {
   const parts = [];
   for (const { id } of GROUP_ORDER) {
+    if (id === 'quality-after') {
+      for (const chip of chipsByGroup[UNKNOWN_GROUP] || []) {
+        if (chip.enabled) parts.push(formatChip(chip));
+      }
+    }
     for (const chip of chipsByGroup[id] || []) {
       if (chip.enabled) parts.push(formatChip(chip));
     }
   }
-  for (const chip of chipsByGroup[UNKNOWN_GROUP] || []) {
-    if (chip.enabled) parts.push(formatChip(chip));
-  }
-  return parts.join(', ');
+  return parts.length ? parts.join(', ') + ',' : '';
 }
 
 // Extract `## Final Prompt` section body from a character md file.
@@ -184,7 +190,7 @@ function parsePrompt(text) {
     raw = raw.replace(/\\([()])/g, '$1');
     const underscored = raw.replace(/ /g, '_');
     let tag;
-    if (flatByTag.has(underscored) || fxByTag.has(underscored) || qualityByTag.has(underscored)) tag = underscored;
+    if (flatByTag.has(underscored) || fxByTag.has(underscored) || qualityByTag.has(underscored) || underscored in allBooruGroups) tag = underscored;
     else tag = raw;
     const groupsForTag = resolveGroups(tag);
     const group = groupsForTag[0] || UNKNOWN_GROUP;
